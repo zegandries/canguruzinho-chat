@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Chat Canguruzinho</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f6fb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .chat-wrapper {
+      width: 100%;
+      max-width: 960px;
+      height: 90vh;
+      background: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-header {
+      background: #075e54;
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .chat-header-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #f9a825;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .chat-header-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .chat-header-sub {
+      font-size: 12px;
+      opacity: 0.9;
+    }
+    .chat-body {
+      flex: 1;
+      padding: 16px;
+      background: #e5ddd5;
+      overflow-y: auto;
+    }
+    .message-row { display: flex; margin-bottom: 8px; }
+    .message-row.bot { justify-content: flex-start; }
+    .message-row.user { justify-content: flex-end; }
+    .message-bubble {
+      max-width: 80%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      white-space: pre-wrap;
+    }
+    .message-bubble.bot {
+      background: #fff;
+      border-top-left-radius: 0;
+    }
+    .message-bubble.user {
+      background: #dcf8c6;
+      border-top-right-radius: 0;
+    }
+    .quick-info {
+      text-align: center;
+      font-size: 12px;
+      color: #555;
+      margin: 8px 0 4px;
+    }
+    .chat-footer {
+      padding: 8px 12px;
+      background: #f0f0f0;
+      border-top: 1px solid #ddd;
+    }
+    .quick-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: flex-end;
+    }
+    .quick-btn {
+      padding: 6px 12px;
+      border-radius: 4px;
+      border: none;
+      background: #0055ff;
+      color: #fff;
+      cursor: pointer;
+    }
+    .quick-btn:hover { background: #003fcc; }
+    .input-row { display: flex; gap: 8px; }
+    .chat-input {
+      flex: 1;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    .send-btn {
+      padding: 0 16px;
+      border-radius: 4px;
+      border: none;
+      background: #128c7e;
+      color: #fff;
+      cursor: pointer;
+    }
+    .send-btn:hover { background: #0d6e63; }
+  </style>
+</head>
+<body>
+  <div class="chat-wrapper">
+    <div class="chat-header">
+      <div class="chat-header-avatar">🦘</div>
+      <div>
+        <div class="chat-header-title">Canguru Itaperuna</div>
+        <div class="chat-header-sub">Online • Robô Canguruzinho</div>
+      </div>
+    </div>
+
+    <div id="chatBody" class="chat-body">
+      <div class="quick-info">🐾 Bem-vindo! Digite um modelo para começar.</div>
+    </div>
+
+    <div class="chat-footer">
+      <div class="quick-actions">
+        <button class="quick-btn" onclick="sendQuick('pesquisar_novamente')">Pesquisar novamente</button>
+        <button class="quick-btn" onclick="sendQuick('falar_com_atendente')">Falar com Atendente</button>
+        <button class="quick-btn" onclick="sendQuick('sair')">Sair</button>
+      </div>
+
+      <div class="input-row">
+        <input id="chatInput" class="chat-input" placeholder="Digite aqui..." />
+        <button class="send-btn" onclick="sendMessage()">Enviar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WEBHOOK_URL = "https://n8n.zegazap.com/webhook/canguruzinho"; // TROCAR PELA SUA URL
+
+    function addMessage(text, from = "bot") {
+      const chatBody = document.getElementById("chatBody");
+      const row = document.createElement("div");
+      row.className = `message-row ${from}`;
+      const bubble = document.createElement("div");
+      bubble.className = `message-bubble ${from}`;
+      bubble.textContent = text;
+      row.appendChild(bubble);
+      chatBody.appendChild(row);
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    async function callWebhook(payload) {
+      try {
+        const res = await fetch(WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        addMessage(data.resposta || "🤖 Ok, continue...", "bot");
+      } catch (error) {
+        addMessage("⚠️ Erro ao conectar ao robô.", "bot");
+      }
+    }
+
+    function sendMessage() {
+      const input = document.getElementById("chatInput");
+      const text = input.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      input.value = "";
+      callWebhook({ mensagem: text, origem: "WEB" });
+    }
+
+    function sendQuick(action) {
+      let msg = "";
+      if (action === "pesquisar_novamente") msg = "Pesquisar novamente";
+      if (action === "falar_com_atendente") msg = "Falar com atendente";
+      if (action === "sair") msg = "Sair";
+
+      addMessage(msg, "user");
+      callWebhook({ acao_quick: action, mensagem: msg, origem: "WEB" });
+    }
+
+    addMessage("🦘 Me fale o modelo que quer saber: Ex: A20s, A50, Note 8");
+  </script>
+</body>
+</html>
