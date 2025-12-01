@@ -189,8 +189,8 @@
 
     function sendQuick(action) {
       let msg = "";
-      if (action === "pesquisar_novamente") msg = "Pesquisar novamente";
-      if (action === "falar_com_atendente") msg = "Falar com atendente";
+      if (action === "pesquisar_novamente") msg = "Escreva de forma direta o que você gostaria de saber o preço? Ex: Tela A20s, Bateria A50, Note 8.";
+      if (action === "falar_com_atendente") msg = "Não tem atendente";
       if (action === "sair") msg = "Sair";
 
       addMessage(msg, "user");
